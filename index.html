@@ -49,6 +49,8 @@
         document.getElementById("localidade").value = document
           .getElementById("localidade")
           .value.toUpperCase();
+        document.getElementById("metar").textContent = "";
+        document.getElementById("taf").textContent = "";
         const request = new Request(
           "https://api-redemet.decea.mil.br/mensagens/metar/" +
             localidade +
