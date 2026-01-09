@@ -3,37 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Metar/TAF Brasil</title>
+    <style>
+      body {
+        max-width: 38rem;
+        padding: 2rem;
+        margin: auto;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      label {
+        display: block;
+      }
+      form {
+        text-align: center;
+        margin: auto;
+      }
+    </style>
   </head>
   <body>
-    <label>
-      Digite a localidade
-      <input type="text" name="localidade" id="localidade" />
-    </label>
-    <button onclick="localidade()">Enviar</button>
+    <form id="form">
+      <label> Digite a localidade </label>
+      <input
+        type="text"
+        name="localidade"
+        id="localidade"
+        placeholder="Ex. SBSP"
+      />
+
+      <button type="submit">Enviar</button>
+    </form>
+
+    <div id="mensagem">
+      <br />
+      <div id="metar"></div>
+      <br />
+      <div id="taf"></div>
+    </div>
     <script>
-      function localidade() {
+      const form = document.getElementById("form");
+      form.addEventListener("submit", localidade);
+
+      async function localidade() {
+        event.preventDefault();
         const localidade = document.getElementById("localidade").value;
+        document.getElementById("localidade").value = document
+          .getElementById("localidade")
+          .value.toUpperCase();
         const request = new Request(
-          "https://aviationweather.gov/api/data/metar?ids=" +
+          "https://api-redemet.decea.mil.br/mensagens/metar/" +
             localidade +
-            "&format=raw"
+            "?api_key=P7nbl2BS8mUe8tAQ95FZSHQzBsA9InoFPkAqBmun"
         );
 
-        fetch(request)
-          .then((response) => {
-            if (response.status !== 200) {
-              throw new Error("Erro");
-            }
-            return response.json();
-          })
-          .then((response) => {
-            console.debug(response);
-            // …
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        const response = await fetch(request);
+        const metar = await response.json();
+        if (metar.data.data[0]) {
+          document.getElementById("metar").textContent =
+            metar.data.data[0].mens;
+          document.title = localidade.toUpperCase() + " Metar|TAF";
+
+          const requestTaf = new Request(
+            "https://api-redemet.decea.mil.br/mensagens/taf/" +
+              localidade +
+              "?api_key=P7nbl2BS8mUe8tAQ95FZSHQzBsA9InoFPkAqBmun"
+          );
+
+          const responseTaf = await fetch(requestTaf);
+          const taf = await responseTaf.json();
+          tafFunc(taf.data.data[0].mens);
+        } else {
+          document.getElementById("mensagem").textContent =
+            "ICAO não encontrado";
+        }
+      }
+
+      function tafFunc(mensagem) {
+        mensagem = mensagem.replaceAll("BECMG", "<br> BECMG");
+        mensagem = mensagem.replaceAll("TEMPO", "<br> TEMPO");
+        mensagem = mensagem.replaceAll("PROB", "<br> PROB");
+
+        document.getElementById("taf").innerHTML = mensagem;
       }
     </script>
   </body>
